@@ -1,0 +1,9 @@
+{
+  "name": "Organoid Segmentation",
+  "short_name": "Organoid",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#1f3a5f",
+  "icons": []
+}

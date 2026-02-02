@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Organoid Segmentation</title>
+    <link rel="manifest" href="/static/manifest.json" />
+    <link rel="stylesheet" href="/static/styles.css" />
+    <meta name="theme-color" content="#1f3a5f" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <h1>Organoid Segmentation</h1>
+        <p>Upload a microscopy image and let GPT-4o trace the organoid boundary.</p>
+      </header>
+
+      <section class="panel">
+        <form id="upload-form">
+          <label class="file-input">
+            <input type="file" name="image" id="image" accept="image/*" required />
+            <span>Select image</span>
+          </label>
+          <div class="actions">
+            <input type="text" id="model" value="gpt-4o-2024-08-06" placeholder="Model" />
+            <button type="submit">Segment</button>
+          </div>
+        </form>
+        <div id="status" class="status">Waiting for an image…</div>
+      </section>
+
+      <section class="results">
+        <div class="card">
+          <h2>Overlay</h2>
+          <canvas id="overlay"></canvas>
+        </div>
+        <div class="card">
+          <h2>Annotated</h2>
+          <img id="annotated" alt="Annotated result" />
+        </div>
+        <div class="card">
+          <h2>Mask</h2>
+          <img id="mask" alt="Mask result" />
+        </div>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
