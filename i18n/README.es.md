@@ -1,6 +1,8 @@
 [English](../README.md) · [العربية](README.ar.md) · [Español](README.es.md) · [Français](README.fr.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Tiếng Việt](README.vi.md) · [中文 (简体)](README.zh-Hans.md) · [中文（繁體）](README.zh-Hant.md) · [Deutsch](README.de.md) · [Русский](README.ru.md)
 
 
+[![LazyingArt banner](https://github.com/lachlanchen/lachlanchen/raw/main/figs/banner.png)](https://github.com/lachlanchen/lachlanchen/blob/main/figs/banner.png)
+
 # Segmentación de Organoides (Web + CLI)
 
 ![Python](https://img.shields.io/badge/Python-3.x-blue.svg)
@@ -10,18 +12,49 @@
 ![Interface](https://img.shields.io/badge/UI-Web%20%2B%20CLI-0ea5e9)
 ![Outputs](https://img.shields.io/badge/Artifacts-Overlay%20%7C%20Mask%20%7C%20JSON-f97316)
 ![PWA](https://img.shields.io/badge/PWA-Minimal%20Support-22c55e)
+![API](https://img.shields.io/badge/API-POST%20%2Fapi%2Fsegment-0f766e)
+![Format](https://img.shields.io/badge/Result-Polygon%20JSON-f59e0b)
 
-Una aplicación en Python para segmentar organoides en imágenes de microscopía mediante modelos de OpenAI con capacidades de visión.
+Una aplicación en Python para segmentar organoides en imágenes de microscopía usando modelos con capacidad de visión de OpenAI.
+
+> Diseñada para experimentos locales rápidos: sube una imagen una vez, revisa los resultados de superposición/máscara/JSON e itera en la elección del modelo.
 
 Este repositorio incluye:
 - Un servidor web Tornado con interfaz de carga.
-- Un flujo de trabajo CLI para uso por lotes o mediante scripts.
+- Un flujo CLI para uso por lotes o mediante scripts.
 - Extracción de polígonos, generación de máscaras y renderizado de imágenes anotadas.
-- Soporte PWA mínimo (manifest + caché de service worker para recursos estáticos principales).
+- Soporte PWA mínimo (manifest + caché con service worker para recursos estáticos principales).
+
+## 🧭 Navegación Rápida
+
+| Sección | Propósito |
+|---|---|
+| [Resumen](#resumen) | Entender qué hace el proyecto y qué genera |
+| [Características](#características) | Ver capacidades clave en flujos web, CLI y API |
+| [Estructura del Proyecto](#estructura-del-proyecto) | Ubicar archivos principales y directorios de ejecución |
+| [Prerrequisitos](#prerrequisitos) | Confirmar requisitos del entorno |
+| [Instalación](#instalación) | Configurar entorno Python y dependencias |
+| [Uso](#uso) | Ejecutar la app web, la CLI o llamadas directas a la API |
+| [Configuración](#configuración) | Ajustar parámetros de modelo y ejecución |
+| [Ejemplos](#ejemplos) | Reutilizar fragmentos para flujos CLI y Python |
+| [Notas de Desarrollo](#notas-de-desarrollo) | Entender detalles de implementación y consejos locales |
+| [Solución de Problemas](#solución-de-problemas) | Resolver incidencias comunes de ejecución y modelo |
+| [Hoja de Ruta](#hoja-de-ruta) | Próximas mejoras planificadas |
+| [Contribuir](#contribuir) | Enviar cambios de forma efectiva |
+| [Support](#support) | Opciones de donación |
+| [Licencia](#license) | Estado actual de licenciamiento |
 
 ## 🔍 Resumen
 
-La app acepta una imagen de microscopía de entrada, la envía a un modelo de OpenAI con un prompt de esquema JSON estricto y devuelve un único polígono que traza el límite del organoide.
+La app acepta una imagen de microscopía, la envía a un modelo de OpenAI con un prompt de esquema JSON estricto y devuelve un único polígono que traza el contorno del organoide.
+
+### 🔄 Flujo Completo
+
+1. Recibe la imagen mediante carga web, ruta CLI o formulario multipart de API.
+2. Invoca el modelo de OpenAI para producir una salida estructurada de polígono.
+3. Valida y limita las coordenadas del polígono a los límites de la imagen.
+4. Renderiza y guarda tres artefactos: imagen anotada, máscara binaria, JSON del polígono.
+5. Devuelve URLs/rutas y metadatos (`width`, `height`, `confidence`).
 
 ### 📌 Vista Rápida
 
@@ -29,57 +62,58 @@ La app acepta una imagen de microscopía de entrada, la envía a un modelo de Op
 |---|---|
 | Entrada | Imagen de microscopía |
 | Salida principal | Polígono del organoide (puntos `x, y`) |
-| Archivos derivados | Overlay anotado PNG, máscara binaria PNG, polígono JSON |
-| Modos de acceso | Interfaz web, CLI, llamada directa a la API |
+| Archivos derivados | Superposición anotada PNG, máscara binaria PNG, JSON del polígono |
+| Modos de acceso | Web UI, CLI, llamada directa a API |
 | Backend | Tornado (`server.py`) |
-| Ruta de IA | OpenAI Responses API primero, Chat Completions como respaldo |
+| Ruta de IA | OpenAI Responses API primero, fallback a Chat Completions |
 
 Artefactos generados:
-- `*_annotated.png`: imagen de origen con overlay rojo semitransparente.
+- `*_annotated.png`: imagen de origen con superposición roja semitransparente.
 - `*_mask.png`: máscara binaria del organoide.
 - `*_polygon.json`: salida estructurada (`width`, `height`, `polygon`, `confidence`).
 
-Archivos principales de ejecución:
-- `server.py`: app web + rutas de API.
+Archivos principales en ejecución:
+- `server.py`: app web + rutas API.
 - `organoid_segmenter.py`: lógica de segmentación y salida de imagen/máscara.
-- `segment_organoid.py`: envoltorio de CLI.
+- `segment_organoid.py`: wrapper CLI.
 
-## ✨ Funcionalidades
+## ✨ Características
 
-- Interfaz web en `http://localhost:8888` para segmentación interactiva rápida.
+- Web UI en `http://localhost:8888` para segmentación interactiva rápida.
 - Endpoint tipo REST `POST /api/segment` con soporte de carga multipart.
-- Nombre de modelo configurable desde la UI y la CLI (`gpt-4o-2024-08-06` por defecto).
-- Validación y ajuste (clamping) de los puntos del polígono a los límites de la imagen.
+- Nombre de modelo configurable desde UI y CLI (`gpt-4o-2024-08-06` por defecto).
+- Validación y limitación de puntos de polígono a los límites de la imagen.
 - Creación automática de directorios de salida (`uploads/`, `outputs/`).
-- OpenAI Responses API como primera opción, Chat Completions como respaldo en la ruta de código.
+- OpenAI Responses API primero y fallback a Chat Completions en la ruta de código.
 - Soporte de service worker para cachear archivos estáticos principales.
 
 ## 🗂️ Estructura del Proyecto
 
 ```text
 Yinghan/
-├─ organoid_segmenter.py          # Lógica principal de segmentación y renderizado de salida
-├─ segment_organoid.py            # Punto de entrada de CLI
+├─ organoid_segmenter.py          # Lógica principal de segmentación y renderizado de salidas
+├─ segment_organoid.py            # Punto de entrada CLI
 ├─ server.py                      # Servidor Tornado + API
 ├─ requirements.txt               # Dependencias de Python
 ├─ templates/
-│  └─ index.html                  # Contenedor de la interfaz web
+│  └─ index.html                  # Shell de la interfaz web
 ├─ static/
 │  ├─ app.js                      # Lógica frontend de carga y renderizado de resultados
 │  ├─ styles.css                  # Estilos de la UI
 │  ├─ manifest.json               # Manifest de PWA
 │  └─ sw.js                       # Lógica de caché del service worker
-├─ i18n/                          # Archivos README localizados (planificados/generados por pipeline)
+├─ i18n/                          # Archivos README localizados
 ├─ uploads/                       # Almacenamiento de cargas en ejecución (gitignored)
-├─ outputs/                       # Salidas de segmentación en ejecución (gitignored, creadas en runtime)
+├─ outputs/                       # Salidas de segmentación en ejecución (gitignored, se crea en runtime)
 └─ .auto-readme-work/             # Contexto/artefactos del pipeline de generación de README
 ```
 
-## ✅ Requisitos Previos
+## ✅ Prerrequisitos
 
-- Python 3.10+ (se requiere 3.x; 3.11 recomendado).
-- Clave de API de OpenAI con acceso a un modelo con capacidades de visión.
-- Acceso de red desde el entorno de ejecución hacia las APIs de OpenAI.
+- Python 3.10+ (3.11 recomendado).
+- `pip` y soporte de entorno virtual (`venv`).
+- Clave API de OpenAI con acceso a un modelo con capacidad de visión.
+- Acceso de red desde el entorno de ejecución a las APIs de OpenAI.
 
 ## ⚙️ Instalación
 
@@ -93,7 +127,7 @@ source .venv/bin/activate  # Windows: .venv\\Scripts\\activate
 pip install -r requirements.txt
 ```
 
-Configura tu clave de API:
+Configura tu clave API:
 
 ```bash
 export OPENAI_API_KEY="your_api_key_here"  # Windows PowerShell: $env:OPENAI_API_KEY="your_api_key_here"
@@ -101,13 +135,22 @@ export OPENAI_API_KEY="your_api_key_here"  # Windows PowerShell: $env:OPENAI_API
 
 ## 🚀 Uso
 
+### ⚡ Resumen de Comandos
+
+| Tarea | Comando |
+|---|---|
+| Iniciar servidor web | `python server.py` |
+| Ejecutar segmentación CLI de una sola imagen | `python segment_organoid.py /path/to/image.jpg` |
+| Ejecutar CLI con modelo + directorio de salida explícitos | `python segment_organoid.py /path/to/image.jpg --out-dir outputs --model gpt-4o-2024-08-06` |
+| Llamar al endpoint API | `curl -X POST http://localhost:8888/api/segment -F "image=@/path/to/image.jpg" -F "model=gpt-4o-2024-08-06"` |
+
 ### 🌐 Ejecutar la App Web
 
 ```bash
 python server.py
 ```
 
-Abrir:
+Abre:
 
 ```text
 http://localhost:8888
@@ -117,7 +160,7 @@ Flujo web:
 1. Elige una imagen.
 2. Opcionalmente cambia el modelo en el campo de entrada.
 3. Haz clic en **Segment**.
-4. Revisa el overlay, la imagen anotada y la máscara.
+4. Revisa la superposición, la imagen anotada y la máscara.
 
 ### 🧪 Ejecutar CLI
 
@@ -131,7 +174,7 @@ Argumentos opcionales:
 python segment_organoid.py /path/to/image.jpg --out-dir outputs --model gpt-4o-2024-08-06
 ```
 
-La CLI imprime las rutas de salida y un resumen con las dimensiones de la imagen y el número de puntos del polígono.
+La CLI imprime rutas de salida y un resumen con las dimensiones de la imagen y el número de puntos del polígono.
 
 ### 🔌 Llamar a la API Directamente
 
@@ -141,7 +184,7 @@ curl -X POST http://localhost:8888/api/segment \
   -F "model=gpt-4o-2024-08-06"
 ```
 
-Forma de respuesta de ejemplo:
+Ejemplo de estructura de respuesta:
 
 ```json
 {
@@ -158,21 +201,17 @@ Forma de respuesta de ejemplo:
 
 ## 🛠️ Configuración
 
-Parámetros configurables actuales en el código:
+Parámetros configurables actuales:
 
-- `model`:
-  - Predeterminado: `gpt-4o-2024-08-06`
-  - Se puede establecer mediante la entrada del formulario web o la opción CLI `--model`
-- `out_dir`:
-  - Opción de CLI `--out-dir` (predeterminado `outputs`)
-  - El servidor usa `outputs/` internamente
-
-Variables de entorno:
-- `OPENAI_API_KEY` (obligatoria).
+| Parámetro | Valor por defecto | Dónde configurarlo |
+|---|---|---|
+| `model` | `gpt-4o-2024-08-06` | Formulario web `model`, CLI `--model`, campo API `model` |
+| `out_dir` | `outputs` | CLI `--out-dir` |
+| API key | none | Variable de entorno `OPENAI_API_KEY` |
 
 Supuestos:
-- El cliente `OpenAI()` usa credenciales basadas en variables de entorno.
-- No se requieren configuraciones personalizadas de base URL ni de org/proyecto, salvo que la configuración de tu cuenta OpenAI lo necesite.
+- El cliente `OpenAI()` usa credenciales basadas en entorno.
+- No se requiere URL base personalizada ni ajustes de org/proyecto, salvo que tu cuenta los necesite.
 
 ## 🧾 Ejemplos
 
@@ -193,7 +232,7 @@ print(result.json_path)
 print(result.confidence)
 ```
 
-### 📄 Inspeccionar el JSON del Polígono
+### 📄 Inspeccionar JSON del Polígono
 
 ```bash
 cat outputs/<name>_polygon.json
@@ -210,11 +249,11 @@ outputs/
 
 ## 🧠 Notas de Desarrollo
 
-- Framework backend: Tornado (`server.py`).
-- Stack frontend: HTML/CSS/JS estático (`templates/index.html`, `static/app.js`).
-- El service worker se registra al cargar la página y cachea los recursos principales listados en `static/sw.js`.
-- La validación de polígonos garantiza al menos 3 puntos y ajusta los límites a los bordes de la imagen.
-- La generación de salida usa Pillow (`PIL.Image`, `ImageDraw`).
+- Framework de backend: Tornado (`server.py`).
+- Stack de frontend: HTML/CSS/JS estático (`templates/index.html`, `static/app.js`).
+- El service worker se registra al cargar la página y cachea recursos principales listados en `static/sw.js`.
+- La validación de polígonos garantiza al menos 3 puntos y limita los valores a los bordes de la imagen.
+- La generación de salidas usa Pillow (`PIL.Image`, `ImageDraw`).
 
 Consejos para desarrollo local:
 
@@ -222,34 +261,44 @@ Consejos para desarrollo local:
 # Run server
 python server.py
 
-# Run CLI against an existing image
+# Run CLI against the included sample image
 python segment_organoid.py 6f1e1874eacffe1dbae0393f48811e74.jpg
 ```
 
-## 🩺 Resolución de Problemas
+## 🩺 Solución de Problemas
 
-- `openai.AuthenticationError` o similar:
-  - Verifica que `OPENAI_API_KEY` esté definida en la shell donde ejecutas Python.
+Mapa rápido:
+
+| Síntoma | Causa probable | Verificación rápida |
+|---|---|---|
+| Error de autenticación | API key ausente/incorrecta | `echo $OPENAI_API_KEY` en la shell activa |
+| Error de parseo JSON o de esquema | Salida de modelo malformada | Reintentar o cambiar modelo en UI/CLI |
+| Menos de 3 puntos de polígono | Extracción de contorno de baja confianza | Probar una imagen más clara y volver a ejecutar |
+| La UI funciona pero falla la segmentación | Excepción de backend durante llamada API | Revisar logs del servidor para `error_type` |
+| Error de importación/módulo | Desajuste de entorno | Reinstalar dependencias en el venv activo |
+
+- `openai.AuthenticationError` (o similar):
+  - Verifica que `OPENAI_API_KEY` esté definida en la misma sesión de shell.
 - `Model response did not contain valid JSON`:
-  - Prueba con otro modelo o vuelve a ejecutar; hay parsing de respaldo, pero la salida malformada puede seguir fallando.
+  - Reintenta o usa otro modelo; existe parseo de fallback, pero salidas malformadas pueden seguir fallando.
 - `Polygon must contain at least 3 points`:
-  - El modelo devolvió un polígono no válido; vuelve a intentar con una imagen más clara.
-- La UI carga, pero la segmentación falla:
-  - Revisa los logs del servidor para ver el tipo de excepción devuelto por `/api/segment`.
+  - La salida del modelo fue inválida; reintenta con una imagen más clara y de mayor contraste.
+- La UI carga, pero falla la segmentación:
+  - Revisa logs del servidor para `error_type` y detalles del stack trace de `/api/segment`.
 - `ModuleNotFoundError`:
-  - Reinstala dependencias con `pip install -r requirements.txt` en el entorno activo.
+  - Reinstala dependencias en el entorno virtual activo con `pip install -r requirements.txt`.
 
 ## 🛣️ Hoja de Ruta
 
-Posibles siguientes pasos para este repositorio:
+Posibles próximos pasos para este repositorio:
 
-1. Añadir pruebas automatizadas para la validación de polígonos y la generación de salidas.
+1. Añadir pruebas automatizadas para validación de polígonos y generación de salidas.
 2. Añadir CI (lint, comprobaciones de tipos y smoke tests).
-3. Añadir modo por lotes en la CLI para procesamiento a nivel de directorio.
-4. Soportar múltiples máscaras de objetos o salida de segmentación por instancias.
+3. Añadir CLI en modo batch para procesar directorios completos.
+4. Soportar múltiples máscaras de objeto o salida de segmentación por instancias.
 5. Añadir Dockerfile y documentación de despliegue.
 6. Añadir ejemplos de benchmark y datasets de muestra con salidas esperadas.
-7. Finalizar los archivos README multilingües en `i18n/`.
+7. Completar los README multilingües bajo `i18n/`.
 
 ## 🤝 Contribuir
 
@@ -258,20 +307,30 @@ Las contribuciones son bienvenidas.
 Flujo de trabajo recomendado:
 
 1. Haz un fork del repositorio y crea una rama de funcionalidad.
-2. Realiza cambios enfocados con mensajes de commit claros.
+2. Realiza cambios acotados con mensajes de commit claros.
 3. Valida localmente los flujos manuales web + CLI.
-4. Abre un pull request describiendo los cambios de comportamiento y la evidencia de pruebas.
+4. Abre un pull request describiendo cambios de comportamiento y evidencia de pruebas.
 
 Áreas sugeridas para contribuir:
-- Mejor diseño del prompt para una extracción de polígonos más estable.
-- Mejora de visualización en frontend (zoom/pan, suavizado de contornos).
-- Harnesses de pruebas y fixtures de muestra reproducibles.
+- Mejor diseño de prompts para una extracción de polígonos más estable.
+- Visualización frontend mejorada (zoom/pan, suavizado de contorno).
+- Arneses de pruebas y fixtures de ejemplo reproducibles.
 - Mejoras de documentación y localización.
+
+<a id="support"></a>
+
+## ❤️ Support
+
+| Donate | PayPal | Stripe |
+|---|---|---|
+| [![Donate](https://img.shields.io/badge/Donate-LazyingArt-0EA5E9?style=for-the-badge&logo=ko-fi&logoColor=white)](https://chat.lazying.art/donate) | [![PayPal](https://img.shields.io/badge/PayPal-RongzhouChen-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://paypal.me/RongzhouChen) | [![Stripe](https://img.shields.io/badge/Stripe-Donate-635BFF?style=for-the-badge&logo=stripe&logoColor=white)](https://buy.stripe.com/aFadR8gIaflgfQV6T4fw400) |
+
+<a id="license"></a>
 
 ## 📄 Licencia
 
-Actualmente no hay un archivo de licencia en este repositorio.
+Actualmente no hay ningún archivo de licencia en este repositorio.
 
-Supuesto: por defecto, todos los derechos están reservados hasta que se añada explícitamente una licencia.
+Supuesto: todos los derechos están reservados por defecto hasta que se añada explícitamente una licencia.
 
 Si planeas compartir o distribuir este proyecto, añade un archivo `LICENSE` y actualiza esta sección.
