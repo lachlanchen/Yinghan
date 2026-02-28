@@ -5,19 +5,42 @@
 
 # Organoid Segmentation (Web + CLI)
 
-![Python](https://img.shields.io/badge/Python-3.x-blue.svg)
-![Framework](https://img.shields.io/badge/Backend-Tornado-009688.svg)
-![AI](https://img.shields.io/badge/OpenAI-Vision%20Segmentation-412991.svg)
-![Status](https://img.shields.io/badge/README-First%20Complete%20Draft-success.svg)
-![Interface](https://img.shields.io/badge/UI-Web%20%2B%20CLI-0ea5e9)
-![Outputs](https://img.shields.io/badge/Artifacts-Overlay%20%7C%20Mask%20%7C%20JSON-f97316)
-![PWA](https://img.shields.io/badge/PWA-Minimal%20Support-22c55e)
-![API](https://img.shields.io/badge/API-POST%20%2Fapi%2Fsegment-0f766e)
-![Format](https://img.shields.io/badge/Result-Polygon%20JSON-f59e0b)
+![Python](https://img.shields.io/badge/Python-3.x-blue.svg?style=flat-square)
+![Framework](https://img.shields.io/badge/Backend-Tornado-009688.svg?style=flat-square)
+![AI](https://img.shields.io/badge/OpenAI-Vision%20Segmentation-412991.svg?style=flat-square)
+![Status](https://img.shields.io/badge/README-First%20Complete%20Draft-success.svg?style=flat-square)
+![Interface](https://img.shields.io/badge/UI-Web%20%2B%20CLI-0ea5e9?style=flat-square)
+![Outputs](https://img.shields.io/badge/Artifacts-Overlay%20%7C%20Mask%20%7C%20JSON-f97316?style=flat-square)
+![PWA](https://img.shields.io/badge/PWA-Minimal%20Support-22c55e?style=flat-square)
+![API](https://img.shields.io/badge/API-POST%20%2Fapi%2Fsegment-0f766e?style=flat-square)
+![Format](https://img.shields.io/badge/Result-Polygon%20JSON-f59e0b?style=flat-square)
+![Mode](https://img.shields.io/badge/Run-Web%20%2F%20CLI%20%2F%20API-8B5CF6?style=flat-square)
 
 A Python application for segmenting organoids in microscopy images using OpenAI vision-capable models.
 
 > Designed for quick local experiments: upload once, inspect overlay/mask/JSON outputs, and iterate on model choice.
+
+## 📋 At-a-Glance
+
+| Aspect | Details |
+|---|---|
+| Input | Microscopy images (local upload, CLI path, or API multipart) |
+| Core output | One organoid polygon with confidence score |
+| Artifact set | Annotated PNG, binary mask PNG, polygon JSON |
+| Interfaces | Web UI, CLI, REST endpoint |
+| AI path | OpenAI Responses API with Chat Completions fallback |
+
+---
+
+## 🧩 Execution Summary
+
+| Channel | Entry | Best Use |
+|---|---|---|
+| Web | `python server.py` | Quick visual verification and adjustments |
+| CLI | `python segment_organoid.py ...` | Scripted or batch-ready runs |
+| API | `POST /api/segment` | Automation and service integration |
+
+---
 
 This repository includes:
 - A Tornado web server with upload UI.
@@ -108,6 +131,13 @@ Yinghan/
 └─ .auto-readme-work/             # README generation pipeline context/artifacts
 ```
 
+### Files you will usually edit
+
+- `server.py` for request handling, routing, and response format.
+- `organoid_segmenter.py` for model prompt, schema, and output rendering.
+- `templates/index.html` / `static/app.js` for UI behavior.
+- `segment_organoid.py` for CLI ergonomics and argument defaults.
+
 ## ✅ Prerequisites
 
 - Python 3.10+ (3.11 recommended).
@@ -118,20 +148,25 @@ Yinghan/
 ## ⚙️ Installation
 
 ```bash
+# 1) Clone and enter the repository
 git clone <your-repo-url>
 cd Yinghan
 
+# 2) Create and activate a virtual environment
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\\Scripts\\activate
 
+# 3) Install dependencies
 pip install -r requirements.txt
 ```
 
-Set your API key:
+Set your API key in the active shell:
 
 ```bash
 export OPENAI_API_KEY="your_api_key_here"  # Windows PowerShell: $env:OPENAI_API_KEY="your_api_key_here"
 ```
+
+Assumption: no `.env` loader is shipped, so environment variable setup is required.
 
 ## 🚀 Usage
 
@@ -317,15 +352,11 @@ Suggested contribution areas:
 - Test harnesses and reproducible sample fixtures.
 - Documentation and localization improvements.
 
-<a id="support"></a>
-
 ## ❤️ Support
 
 | Donate | PayPal | Stripe |
-|---|---|---|
-| [![Donate](https://img.shields.io/badge/Donate-LazyingArt-0EA5E9?style=for-the-badge&logo=ko-fi&logoColor=white)](https://chat.lazying.art/donate) | [![PayPal](https://img.shields.io/badge/PayPal-RongzhouChen-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://paypal.me/RongzhouChen) | [![Stripe](https://img.shields.io/badge/Stripe-Donate-635BFF?style=for-the-badge&logo=stripe&logoColor=white)](https://buy.stripe.com/aFadR8gIaflgfQV6T4fw400) |
-
-<a id="license"></a>
+| --- | --- | --- |
+| [![Donate](https://camo.githubusercontent.com/24a4914f0b42c6f435f9e101621f1e52535b02c225764b2f6cc99416926004b7/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f446f6e6174652d4c617a79696e674172742d3045413545393f7374796c653d666f722d7468652d6261646765266c6f676f3d6b6f2d6669266c6f676f436f6c6f723d7768697465)](https://chat.lazying.art/donate) | [![PayPal](https://camo.githubusercontent.com/d0f57e8b016517a4b06961b24d0ca87d62fdba16e18bbdb6aba28e978dc0ea21/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f50617950616c2d526f6e677a686f754368656e2d3030343537433f7374796c653d666f722d7468652d6261646765266c6f676f3d70617970616c266c6f676f436f6c6f723d7768697465)](https://paypal.me/RongzhouChen) | [![Stripe](https://camo.githubusercontent.com/1152dfe04b6943afe3a8d2953676749603fb9f95e24088c92c97a01a897b4942/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f5374726970652d446f6e6174652d3633354246463f7374796c653d666f722d7468652d6261646765266c6f676f3d737472697065266c6f676f436f6c6f723d7768697465)](https://buy.stripe.com/aFadR8gIaflgfQV6T4fw400) |
 
 ## 📄 License
 
